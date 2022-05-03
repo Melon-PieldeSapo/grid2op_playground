@@ -36,6 +36,7 @@ env = grid2op.make(env_name,
                                          '6_8_19', '8_13_11', '8_9_10', '9_10_12']}
                    )
 
+env = grid2op.make(env_name)
 env.reset()
 
 agent = DqnGrid2op(env, seed=0)
@@ -61,7 +62,7 @@ def dqn(n_episodes=4000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
         for t in range(max_t):
 
             # elegir accion At con politica e-greedy
-            action = agent.act(state, eps)
+            action = agent._act(state, eps)
 
             # aplicar At y obtener Rt+1, St+1
             next_state, reward, done, _ = env.step(agent.convert_act(action))
@@ -120,7 +121,7 @@ for j in range(200):
         # takes an action
         # and the environment computes the next observation that will be used at the next step.
         _ = env.render()
-        act = agent.act(obs, j)
+        act = agent._act(obs, j)
         print(act)
         obs, reward, done, info = env.step(agent.convert_act(act))
         print(F"{reward}")

@@ -5,6 +5,7 @@ import numpy as np
 import random
 from collections import namedtuple, deque
 
+from Grid2Op.grid2op.Converter.IdToAct import IdToAct
 from model import QNetwork
 
 import torch
@@ -20,22 +21,28 @@ UPDATE_EVERY = 4  # how often to update the target network (C)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
 class DqnGrid2op(MLAgent):
 
-    def __init__(self, ENV, seed, action_space_converter=ToVect, **kwargs_converter):
+    def __init__(self, ENV, seed, observation_space_converter=ToVect, action_space_converter=IdToAct, **kwargs_converter):
         MLAgent.__init__(self, ENV.action_space, action_space_converter, **kwargs_converter)
         self.action_space = ENV.action_space
         self.do_nothing_act = self.action_space()
-        self.converter = action_space_converter(self.action_space)  # (64, 200, 200, 3)
-        self.converter.seed(0)
-        self.converter.init_converter(max_sub_changed=ENV.parameters.MAX_SUB_CHANGED)
-        sample_obs_vect = self.converter.convert_obs(ENV.reset())
+        self.action_converter = action_space_converter(self.action_space)  # (64, 200, 200, 3)
+        self.action_converter.seed(0)
+        self.action_converter.init_converter(change_bus_vect=True,redispatch=True,curtail=True,storage=True)
+
+        self.observation_converter = observation_space_converter(self.action_space)
+        self.action_converter.seed(0)
+        self.action_converter.init_converter()
+
+        sample_obs_vect = self.observation_converter.convert_obs(ENV.reset())
         sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
 
         self.state_size = len(sample_obs_vect)
 
-        self.action_size = len(self.do_nothing_act.to_vect())*2
-        self.seed = random.seed(seed)
+        self.action_size = len(self.do_nothing_act.to_vect()) * 2
+        random.seed(seed)
 
         ##BUilding the modeL:
         # Q-Network
@@ -48,21 +55,20 @@ class DqnGrid2op(MLAgent):
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
 
-
-
     def convert_obs(self, observation):
-        sample_obs_vect = self.converter.convert_obs(observation)
+        sample_obs_vect = self.observation_converter.convert_obs(observation)
         sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
         return sample_obs_vect
         # convert the observation
-        #return np.concatenate((observation.load_p, observation.rho + observation.p_or))
+        # return np.concatenate((observation.load_p, observation.rho + observation.p_or))
 
     def convert_act(self, encoded_act):
-        decoded_action = self.action_space().to_vect()
-        decoded_action[int(encoded_act/2)] = 1 if encoded_act > (self.action_size/2) else -1
-        return self.converter.convert_act(decoded_action)
+        return self.action_converter.convert_act(int(encoded_act))
 
-    def act(self, obs, eps=0.):
+    def act(self, observation, reward, done=False):
+        return self.convert_act(self._act(obs=observation, eps=100))
+
+    def _act(self, obs, eps=0.):
         """Returns actions for given state as per current policy.
 
         Params

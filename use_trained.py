@@ -33,7 +33,7 @@ env = grid2op.make(env_name,
 env.reset()
 
 agent = DqnGrid2op(env, seed=0)
-agent.qnetwork_local.load_state_dict(torch.load('checkpoint.pth'))
+agent.qnetwork_local.load_state_dict(torch.load('1651596314.4605389/4000checkpoint.pth'))
 
 
 
@@ -49,6 +49,8 @@ for j in range(200):
         # and the environment computes the next observation that will be used at the next step.
         #_ = env.render()
         act = agent.act(obs, j)
-        print(F"act {agent.convert_act(act)}")
+        #print(F"act {agent.convert_act(act)}")
         obs, reward, done, info = env.step(agent.convert_act(act))
         print(F"reward {reward}")
+
+env.close()
