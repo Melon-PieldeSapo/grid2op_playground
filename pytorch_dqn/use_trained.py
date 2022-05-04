@@ -1,16 +1,10 @@
-from RandomLineOpponent import MyRandomLineOpponent
-from pytorch_DQN_test import DqnGrid2op
-import gym
-import random
+from pytorch_dqn.RandomLineOpponent import MyRandomLineOpponent
 import torch
-import numpy as np
-from collections import deque
-import matplotlib.pyplot as plt
 import grid2op
 # create an environment
 
 from grid2op.Action import PowerlineSetAction
-from grid2op.Opponent import RandomLineOpponent, BaseActionBudget
+from grid2op.Opponent import BaseActionBudget
 
 from pytorch_DQN_test import DqnGrid2op
 
