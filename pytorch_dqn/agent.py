@@ -37,11 +37,12 @@ class DqnGrid2op(MLAgent):
         self.action_converter.init_converter()
 
         sample_obs_vect = self.observation_converter.convert_obs(ENV.reset())
-        sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
+        #print(sample_obs_vect)
+        #sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
+        #print(sample_obs_vect)
 
         self.state_size = len(sample_obs_vect)
-
-        self.action_size = len(self.do_nothing_act.to_vect()) * 2
+        self.action_size = self.action_converter.n
         random.seed(seed)
 
         ##BUilding the modeL:
