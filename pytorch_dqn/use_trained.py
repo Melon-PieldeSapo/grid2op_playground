@@ -1,4 +1,4 @@
-from pytorch_dqn.RandomLineOpponent import MyRandomLineOpponent
+from pytorch_dqn.Opponents import MyRandomLineOpponent
 import torch
 import grid2op
 # create an environment

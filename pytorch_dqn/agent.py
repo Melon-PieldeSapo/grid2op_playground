@@ -24,22 +24,25 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DqnGrid2op(MLAgent):
 
-    def __init__(self, ENV, seed, observation_space_converter=ToVect, action_space_converter=IdToAct, **kwargs_converter):
+    def __init__(self, ENV, seed, observation_space_converter=ToVect, action_space_converter=IdToAct,
+                 **kwargs_converter):
         MLAgent.__init__(self, ENV.action_space, action_space_converter, **kwargs_converter)
+        self.max_reward = 0
         self.action_space = ENV.action_space
         self.do_nothing_act = self.action_space()
         self.action_converter = action_space_converter(self.action_space)  # (64, 200, 200, 3)
         self.action_converter.seed(0)
-        self.action_converter.init_converter(change_bus_vect=True,redispatch=True,curtail=True,storage=True)
+        self.action_converter.init_converter(change_bus_vect=True, redispatch=True, curtail=False, storage=True,
+                                             change_line_status=True, set_line_status=True)
 
         self.observation_converter = observation_space_converter(self.action_space)
         self.action_converter.seed(0)
         self.action_converter.init_converter()
 
         sample_obs_vect = self.observation_converter.convert_obs(ENV.reset())
-        #print(sample_obs_vect)
-        #sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
-        #print(sample_obs_vect)
+        # print(sample_obs_vect)
+        # sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
+        # print(sample_obs_vect)
 
         self.state_size = len(sample_obs_vect)
         self.action_size = self.action_converter.n
@@ -68,6 +71,11 @@ class DqnGrid2op(MLAgent):
 
     def act(self, observation, reward, done=False):
         return self.convert_act(self._act(obs=observation, eps=100))
+
+    def norm_reward(self,reward):
+        if reward > self.max_reward:
+            self.max_reward = reward
+        return (reward/self.max_reward)*10 if reward > 0 else reward
 
     def _act(self, obs, eps=0.):
         """Returns actions for given state as per current policy.
