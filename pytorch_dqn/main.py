@@ -12,7 +12,7 @@ import grid2op
 from grid2op.Action import PowerlineSetAction
 from grid2op.Opponent import BaseActionBudget
 
-from pytorch_DQN_test import DqnGrid2op
+from agent import DqnGrid2op
 
 env_name = "rte_case14_realistic"  # for example, other environments might be usable
 runtime = time.time()
