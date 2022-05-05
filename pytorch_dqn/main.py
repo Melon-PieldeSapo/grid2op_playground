@@ -39,7 +39,7 @@ env.reset()
 agent = DqnGrid2op(env, seed=0)
 
 
-def dqn(n_episodes=4000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.995):
+def dqn(n_episodes=2000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.995):
     """Deep Q-Learning.
 
     Params
@@ -54,6 +54,7 @@ def dqn(n_episodes=4000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
     scores_window = deque(maxlen=100)  # puntuaciones de los ultimos 100 episodios
     eps = eps_start  # inicializar epsilon
     t_sum = 0
+    actions = {}
     for i_episode in range(1, n_episodes + 1):
         state = env.reset()
         score = 0
@@ -61,7 +62,9 @@ def dqn(n_episodes=4000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
 
             # elegir accion At con politica e-greedy
             action = agent._act(state, eps)
-
+            if action not in actions:
+                actions[action] = 0
+            actions[action]+=1
             # aplicar At y obtener Rt+1, St+1
             next_state, reward, done, _ = env.step(agent.convert_act(action))
             reward = agent.norm_reward(reward)
@@ -91,11 +94,12 @@ def dqn(n_episodes=4000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
             torch.save(agent.qnetwork_local.state_dict(),
                        F"{runtime}/{i_episode}_{np.mean(scores_window)}_checkpoint.pth")  # guardar pesos de agente entrenado
 
-        if np.mean(scores_window) >= 9000.0:
+        if np.mean(scores_window) >= 2000.0:
             print('\nProblema resuelto en {:d} episodios!\tPuntuacion media (ultimos {:d}): {:.2f}'.format(
                 i_episode - 100, 100, np.mean(scores_window)))
             torch.save(agent.qnetwork_local.state_dict(), 'checkpoint.pth')  # guardar pesos de agente entrenado
             break
+    print(actions)
     return scores
 
 
@@ -121,8 +125,9 @@ for j in range(200):
         # takes an action
         # and the environment computes the next observation that will be used at the next step.
         _ = env.render()
-        act = agent._act(obs, j)
+        act = agent._act(obs, 100)
+        print(F"act: {act}")
         obs, reward, done, info = env.step(agent.convert_act(act))
-        print(F"act: {act} gives reward: {reward}")
+        print(F"gives reward: {reward}")
         score += reward
     print(F"J: {j} gives reward: {score}")

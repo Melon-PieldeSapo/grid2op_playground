@@ -28,6 +28,7 @@ class DqnGrid2op(MLAgent):
                  **kwargs_converter):
         MLAgent.__init__(self, ENV.action_space, action_space_converter, **kwargs_converter)
         self.max_reward = 0
+        self.reward_range = ENV.reward_range
         self.action_space = ENV.action_space
         self.do_nothing_act = self.action_space()
         self.action_converter = action_space_converter(self.action_space)  # (64, 200, 200, 3)
@@ -50,8 +51,10 @@ class DqnGrid2op(MLAgent):
 
         ##BUilding the modeL:
         # Q-Network
-        self.qnetwork_local = QNetwork(self.state_size, self.action_size, seed).to(device)
-        self.qnetwork_target = QNetwork(self.state_size, self.action_size, seed).to(device)
+        units = self.state_size+self.action_size
+
+        self.qnetwork_local = QNetwork(self.state_size, self.action_size, seed,fc1_units=units, fc2_units=units).to(device)
+        self.qnetwork_target = QNetwork(self.state_size, self.action_size, seed,fc1_units=units, fc2_units=units).to(device)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
@@ -73,9 +76,7 @@ class DqnGrid2op(MLAgent):
         return self.convert_act(self._act(obs=observation, eps=100))
 
     def norm_reward(self,reward):
-        if reward > self.max_reward:
-            self.max_reward = reward
-        return (reward/self.max_reward)*10 if reward > 0 else reward
+        return (reward/self.reward_range[1])*10 if reward > 0 else reward
 
     def _act(self, obs, eps=0.):
         """Returns actions for given state as per current policy.
