@@ -64,7 +64,7 @@ class DqnGrid2op(MLAgent):
 
     def convert_obs(self, observation):
         sample_obs_vect = self.observation_converter.convert_obs(observation)
-        sample_obs_vect.reshape(-1, len(sample_obs_vect), 1)
+
         return sample_obs_vect
         # convert the observation
         # return np.concatenate((observation.load_p, observation.rho + observation.p_or))
