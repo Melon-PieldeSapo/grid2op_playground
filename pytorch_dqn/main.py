@@ -1,4 +1,5 @@
 import os
+import random
 import time
 
 from pytorch_dqn.Opponents import MyRandomOpponent
@@ -70,9 +71,9 @@ def dqn(n_episodes=2000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
             reward = agent.norm_reward(reward)
             # almacenar <St, At, Rt+1, St+1>
             agent.memory.add(agent.convert_obs(state), action, reward, agent.convert_obs(next_state), done)
-
-            # train & update
-            agent.step(agent.convert_obs(state), action, reward, agent.convert_obs(next_state), done)
+            if action != 0 or  random.random() > 0.1:
+                # train & update
+                agent.step(agent.convert_obs(state), action, reward, agent.convert_obs(next_state), done)
 
             # avanzar estado
             state = next_state
