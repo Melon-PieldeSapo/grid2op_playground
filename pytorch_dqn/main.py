@@ -20,7 +20,6 @@ runtime = time.time()
 # env_name = "l2rpn_neurips_2020_track2_small"
 os.mkdir(F"./{runtime}")
 
-
 env = grid2op.make(env_name,
                    opponent_attack_cooldown=12 * 80,
                    opponent_attack_duration=12 * 10,
@@ -33,7 +32,7 @@ env = grid2op.make(env_name,
                                         ['0_1_0', '0_4_1', '11_12_13', '12_13_14', '1_2_2', '1_3_3', '1_4_4', '2_3_5',
                                          '3_4_6', '3_6_15', '3_8_16', '4_5_17', '5_10_7', '5_11_8', '5_12_9', '6_7_18',
                                          '6_8_19', '8_13_11', '8_9_10', '9_10_12'],
-                                    "generators_attacked":['gen_0_4', 'gen_1_0', 'gen_2_1', 'gen_5_2', 'gen_7_3']}
+                                    "generators_attacked": ['gen_0_4', 'gen_1_0', 'gen_2_1', 'gen_5_2', 'gen_7_3']}
                    )
 env.reset()
 
@@ -59,19 +58,19 @@ def dqn(n_episodes=2000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
     for i_episode in range(1, n_episodes + 1):
         state = env.reset()
         score = 0
+        actions[i_episode] = []
         for t in range(max_t):
 
             # elegir accion At con politica e-greedy
             action = agent._act(state, eps)
-            if action not in actions:
-                actions[action] = 0
-            actions[action]+=1
+
             # aplicar At y obtener Rt+1, St+1
             next_state, reward, done, _ = env.step(agent.convert_act(action))
             reward = agent.norm_reward(reward)
+            actions[i_episode].append((action, reward))
             # almacenar <St, At, Rt+1, St+1>
             agent.memory.add(agent.convert_obs(state), action, reward, agent.convert_obs(next_state), done)
-            if action != 0 or  random.random() > 0.1:
+            if action != 0 or random.random() > 0.1:
                 # train & update
                 agent.step(agent.convert_obs(state), action, reward, agent.convert_obs(next_state), done)
 
@@ -86,18 +85,20 @@ def dqn(n_episodes=2000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
         scores.append(score)  # guardar ultima puntuacion
         eps = max(eps_end, eps_decay * eps)  # reducir epsilon
 
-        print('\rEpisodio {}\tPuntuacion media (ultimos {:d}): {:.2f}\t Done in {} t.'.format(i_episode, 100, np.mean(scores_window),t),
-              end="")
+        print(
+            F'\rEpisodio {i_episode}\tPuntuacion media (ultimos {100:d}): {np.mean(scores_window):.2f}\t Done in {t} t.'
+            F' Actions: {actions[i_episode]}',
+            end="")
         if i_episode % 100 == 0:
-            print('\rEpisodio {}\tPuntuacion media ({:d} anteriores): {:.2f}\t Done in {} mean T.'.format(i_episode, 100,
-                                                                                     np.mean(scores_window),t_sum/100))
+            print(
+                F'\rEpisodio {i_episode}\tPuntuacion media ({100:d} anteriores): {np.mean(scores_window):.2f}\t Done in {t_sum / 100} mean T.'
+                F' Actions: {actions[i_episode]}')
             t_sum = 0
             torch.save(agent.qnetwork_local.state_dict(),
                        F"{runtime}/{i_episode}_{np.mean(scores_window)}_checkpoint.pth")  # guardar pesos de agente entrenado
 
         if np.mean(scores_window) >= 2000.0:
-            print('\nProblema resuelto en {:d} episodios!\tPuntuacion media (ultimos {:d}): {:.2f}'.format(
-                i_episode - 100, 100, np.mean(scores_window)))
+            print(F'\nProblema resuelto en {i_episode - 100:d} episodios!\tPuntuacion media (ultimos {100:d}): { np.mean(scores_window):.2f}')
             torch.save(agent.qnetwork_local.state_dict(), 'checkpoint.pth')  # guardar pesos de agente entrenado
             break
     print(actions)
