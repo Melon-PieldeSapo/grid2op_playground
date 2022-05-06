@@ -7,6 +7,7 @@ from collections import namedtuple, deque
 
 from Grid2Op.grid2op.Converter.IdToAct import IdToAct
 from model import QNetwork
+from torch_geometric.data import Data
 
 import torch
 import torch.nn.functional as F
@@ -51,10 +52,12 @@ class DqnGrid2op(MLAgent):
 
         ##BUilding the modeL:
         # Q-Network
-        units = self.state_size+self.action_size
+        units = self.state_size + self.action_size
 
-        self.qnetwork_local = QNetwork(self.state_size, self.action_size, seed,fc1_units=units, fc2_units=units).to(device)
-        self.qnetwork_target = QNetwork(self.state_size, self.action_size, seed,fc1_units=units, fc2_units=units).to(device)
+        self.qnetwork_local = QNetwork(self.state_size, self.action_size, seed, fc1_units=units, fc2_units=units).to(
+            device)
+        self.qnetwork_target = QNetwork(self.state_size, self.action_size, seed, fc1_units=units, fc2_units=units).to(
+            device)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
@@ -63,8 +66,18 @@ class DqnGrid2op(MLAgent):
         self.t_step = 0
 
     def convert_obs(self, observation):
-        sample_obs_vect = self.observation_converter.convert_obs(observation)
+        substations=[]
+        for sub in range(observation.n_sub+1):
+            substations.append([sub])
 
+        edge_index = torch.tensor([observation.line_ex_to_subid,
+                                   observation.line_ex_to_subid], dtype=torch.long)
+        x = torch.tensor(substations, dtype=torch.float)
+
+        data = Data(x=x, edge_index=edge_index.t().contiguous())
+        return data
+
+        sample_obs_vect = self.observation_converter.convert_obs(observation)
         return sample_obs_vect
         # convert the observation
         # return np.concatenate((observation.load_p, observation.rho + observation.p_or))
@@ -75,8 +88,8 @@ class DqnGrid2op(MLAgent):
     def act(self, observation, reward, done=False):
         return self.convert_act(self._act(obs=observation, eps=100))
 
-    def norm_reward(self,reward):
-        return (reward/self.reward_range[1])*10 if reward > 0 else reward
+    def norm_reward(self, reward):
+        return (reward / self.reward_range[1]) * 10 if reward > 0 else reward
 
     def _act(self, obs, eps=0.):
         """Returns actions for given state as per current policy.
