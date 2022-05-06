@@ -75,7 +75,7 @@ class DqnGrid2op(MLAgent):
         return self.convert_act(self._act(obs=observation, eps=100))
 
     def norm_reward(self,reward):
-        return (reward/self.reward_range[1])*(reward/self.reward_range[1])*10 if reward > 0 else reward
+        return (reward/self.reward_range[1])*(reward/self.reward_range[1]) * (100 if reward > 0 else 1)
 
     def _act(self, obs, eps=0.):
         """Returns actions for given state as per current policy.

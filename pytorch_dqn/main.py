@@ -39,7 +39,7 @@ env.reset()
 agent = DqnGrid2op(env, seed=0)
 
 
-def dqn(n_episodes=2000, max_t=2000, eps_start=1.0, eps_end=0.01, eps_decay=0.995):
+def dqn(n_episodes=2000, max_t=2000, eps_start=100.0, eps_end=0.01, eps_decay=0.995):
     """Deep Q-Learning.
 
     Params
